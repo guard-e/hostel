@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+
+{% block title %}Управление картами{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1>Список карт</h1>
+            <button class="btn btn-primary" onclick="showAddCardForm()">
+                <i class="bi bi-plus"></i> Добавить карту
+            </button>
+        </div>
+
+        <div id="loading" class="spinner-border" role="status" style="display: none;">
+            <span class="visually-hidden">Загрузка...</span>
+        </div>
+
+        <div id="message" class="alert" role="alert" style="display: none;"></div>
+
+        <table class="table table-striped table-hover" id="cardsTable">
+            <thead class="table-dark">
+                <tr>
+                    <th>ID</th>
+                    <th>Номер карты</th>
+                    <th>Комната</th>
+                    <th>Действительна с</th>
+                    <th>Действительна до</th>
+                    <th>Статус</th>
+                    <th>Действия</th>
+                </tr>
+            </thead>
+            <tbody id="cardsBody">
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Модальное окно для формы карты -->
+<div class="modal fade" id="cardModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="cardModalTitle">Добавить карту</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="cardForm">
+                    <div class="mb-3">
+                        <label for="room" class="form-label">Номер комнаты:</label>
+                        <input type="number" class="form-control" id="room" name="room" required>
+                        <small class="form-text text-muted">Формат: XXYY (XX - этаж, YY - номер комнаты)</small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="card_number" class="form-label">Номер карты:</label>
+                        <input type="number" class="form-control" id="card_number" name="card_number" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="valid_from" class="form-label">Действительна с:</label>
+                        <input type="date" class="form-control" id="valid_from" name="valid_from" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="valid_days" class="form-label">Количество дней:</label>
+                        <input type="number" class="form-control" id="valid_days" name="valid_days" required min="1">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="comments" class="form-label">Комментарий:</label>
+                        <textarea class="form-control" id="comments" name="comments" rows="3"></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="dep" class="form-label">Отдел:</label>
+                        <input type="text" class="form-control" id="dep" name="dep" value="ХОСТЕЛ">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="button" class="btn btn-primary" onclick="saveCard()">Сохранить</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно подтверждения удаления -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Подтверждение удаления</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                Вы уверены, что хотите удалить эту карту?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="button" class="btn btn-danger" onclick="confirmDelete()">Удалить</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/cards.js') }}"></script>
+<script>
+    // Загрузить карты при загрузке страницы
+    document.addEventListener('DOMContentLoaded', function() {
+        loadCards();
+    });
+</script>
+{% endblock %}
