@@ -6,8 +6,15 @@
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for
 import os
 from dotenv import load_dotenv
+import tempfile
+import shutil
+import logging
 
 load_dotenv()
+
+# Настроить логирование
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY', 'dev-secret-key-change-in-production')
@@ -43,9 +50,27 @@ def index():
 def select_database():
     """Выбор файла базы данных"""
     if request.method == 'POST':
-        db_path = request.form.get('db_path')
+        db_path = None
+        
+        # Проверить загруженный файл
+        if 'db_file' in request.files:
+            file = request.files['db_file']
+            if file and file.filename and file.filename.endswith('.fdb'):
+                # Сохранить загруженный файл во временную папку
+                temp_dir = tempfile.gettempdir()
+                db_path = os.path.join(temp_dir, file.filename)
+                try:
+                    file.save(db_path)
+                except Exception as e:
+                    logger.error(f"Error saving uploaded file: {str(e)}")
+                    return render_template('select_database.html', error=f'Ошибка при сохранении файла: {str(e)}')
+        
+        # Если файл не загружен, использовать введенный путь
+        if not db_path:
+            db_path = request.form.get('db_path')
+        
         if not db_path or not os.path.exists(db_path):
-            return render_template('select_database.html', error='Файл не найден')
+            return render_template('select_database.html', error='Файл не найден или не выбран')
         
         try:
             # Проверка подключения
@@ -56,6 +81,7 @@ def select_database():
             session['db_path'] = db_path
             return redirect(url_for('login'))
         except Exception as e:
+            logger.error(f"Database connection error: {str(e)}")
             return render_template('select_database.html', error=f'Ошибка подключения: {str(e)}')
     
     return render_template('select_database.html')

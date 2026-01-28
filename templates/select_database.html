@@ -5,6 +5,55 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Выбор базы данных</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .file-input-wrapper {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+            width: 100%;
+        }
+        
+        .file-input-wrapper input[type=file] {
+            position: absolute;
+            left: -9999px;
+        }
+        
+        .file-input-label {
+            display: block;
+            padding: 10px 15px;
+            background-color: #f8f9fa;
+            border: 2px dashed #dee2e6;
+            border-radius: 4px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        
+        .file-input-label:hover {
+            background-color: #e9ecef;
+            border-color: #007bff;
+        }
+        
+        .file-input-label.dragover {
+            background-color: #e7f3ff;
+            border-color: #007bff;
+            box-shadow: 0 0 10px rgba(0, 123, 255, 0.3);
+        }
+        
+        .file-name {
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            border-radius: 4px;
+            color: #155724;
+            display: none;
+        }
+        
+        .file-name.show {
+            display: block;
+        }
+    </style>
 </head>
 <body class="bg-light">
     <div class="container d-flex justify-content-center align-items-center min-vh-100">
@@ -19,12 +68,32 @@
                 </div>
                 {% endif %}
 
-                <form method="POST">
+                <form method="POST" id="dbForm" enctype="multipart/form-data">
+                    <div class="mb-4">
+                        <label class="form-label">Выберите файл guardee.fdb:</label>
+                        <div class="file-input-wrapper">
+                            <input type="file" class="form-control" id="db_file" name="db_file" 
+                                   accept=".fdb" onchange="updateFileName()">
+                            <label for="db_file" class="file-input-label" id="fileLabel">
+                                <div>
+                                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                        <polyline points="17 8 12 3 7 8"></polyline>
+                                        <line x1="12" y1="3" x2="12" y2="15"></line>
+                                    </svg>
+                                    <p class="mt-2 mb-0">Перетащите файл сюда или нажмите для выбора</p>
+                                </div>
+                            </label>
+                        </div>
+                        <div class="file-name" id="fileName"></div>
+                        <small class="form-text text-muted d-block mt-2">Выберите файл базы данных Firebird (.fdb)</small>
+                    </div>
+
                     <div class="mb-3">
-                        <label for="db_path" class="form-label">Путь к файлу guardee.fdb:</label>
-                        <input type="text" class="form-control" id="db_path" name="db_path" required 
+                        <label for="db_path" class="form-label">Или укажите путь вручную:</label>
+                        <input type="text" class="form-control" id="db_path" name="db_path" 
                                placeholder="Например: D:\db\guardee.fdb">
-                        <small class="form-text text-muted">Укажите полный путь к файлу базы данных Firebird</small>
+                        <small class="form-text text-muted">Полный путь к файлу базы данных</small>
                     </div>
 
                     <button type="submit" class="btn btn-primary w-100">Подключиться</button>
@@ -39,5 +108,48 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const fileInput = document.getElementById('db_file');
+        const fileLabel = document.getElementById('fileLabel');
+        const fileName = document.getElementById('fileName');
+        const dbPathInput = document.getElementById('db_path');
+
+        // Drag and drop
+        fileLabel.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            fileLabel.classList.add('dragover');
+        });
+
+        fileLabel.addEventListener('dragleave', () => {
+            fileLabel.classList.remove('dragover');
+        });
+
+        fileLabel.addEventListener('drop', (e) => {
+            e.preventDefault();
+            fileLabel.classList.remove('dragover');
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                const file = files[0];
+                if (file.name.endsWith('.fdb')) {
+                    fileInput.files = files;
+                    updateFileName();
+                } else {
+                    alert('Пожалуйста, выберите файл .fdb');
+                }
+            }
+        });
+
+        function updateFileName() {
+            if (fileInput.files.length > 0) {
+                const file = fileInput.files[0];
+                fileName.textContent = '✓ Выбран файл: ' + file.name;
+                fileName.classList.add('show');
+                dbPathInput.value = '';
+            } else {
+                fileName.classList.remove('show');
+            }
+        }
+    </script>
 </body>
 </html>
